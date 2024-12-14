@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import {
   Container,
   Paper,
@@ -7,139 +7,90 @@ import {
   Box,
   CircularProgress,
   Button,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material'
-import { Song, Section, Measure } from '@/types/song'
+import { Song } from '@/types/song'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useRouter } from 'next/navigation'
-
-// コードダイアグラムコンポーネント
-const ChordDiagram = ({ chord }: { chord: string }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      mr: 2,
-      minWidth: '80px',
-    }}
-  >
-    <Typography 
-      sx={{ 
-        fontSize: '1rem',
-        fontWeight: 'bold',
-        mb: 0.5,
-      }}
-    >
-      {chord}
-    </Typography>
-    <Box
-      component="img"
-      src={`/chord-diagrams/${chord}.svg`}
-      alt={`${chord} chord`}
-      sx={{
-        width: '80px',
-        height: '100px',
-      }}
-    />
-  </Box>
-)
-
-// 小節コンポーネント
-const MeasureDisplay = ({ measure }: { measure: Measure }) => {
-  const chords = measure.chords.split(' ')
-  
-  return (
-    <Box sx={{ mb: 3 }}>
-      <Paper 
-        elevation={1} 
-        sx={{ 
-          p: 3,
-          '&:hover': {
-            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-          }
-        }}
-      >
-        <Typography 
-          variant="subtitle2" 
-          color="text.secondary" 
-          sx={{ mb: 2 }}
-        >
-          小節 {measure.measure_number}
-        </Typography>
-        
-        {/* コードダイアグラムの表示 */}
-        <Box 
-          sx={{ 
-            display: 'flex',
-            flexWrap: 'wrap',
-            mb: 2,
-            gap: 2,
-          }}
-        >
-          {chords.map((chord, index) => (
-            <ChordDiagram key={index} chord={chord} />
-          ))}
-        </Box>
-
-        {/* 歌詞の表示 */}
-        <Box sx={{ mt: 2 }}>
-          <Typography 
-            sx={{ 
-              color: '#d32f2f', // 赤色の歌詞
-              fontSize: '1.2rem',
-              fontWeight: 500,
-              letterSpacing: '0.05em',
-            }}
-          >
-            {measure.lyrics}
-          </Typography>
-        </Box>
-      </Paper>
-    </Box>
-  )
-}
-
-// セクションコンポーネント
-const SectionDisplay = ({ section, measures }: { section: Section; measures: Measure[] }) => {
-  const sectionMeasures = measures.filter(
-    m => m.measure_number >= section.start_measure && m.measure_number <= section.end_measure
-  ).sort((a, b) => a.measure_number - b.measure_number)
-
-  return (
-    <Accordion defaultExpanded sx={{ mb: 2 }}>
-      <AccordionSummary 
-        expandIcon={<ExpandMoreIcon />}
-        sx={{ 
-          backgroundColor: 'rgba(0, 0, 0, 0.03)',
-          '&.Mui-expanded': {
-            minHeight: '48px',
-          }
-        }}
-      >
-        <Typography variant="h6">{section.section_name}</Typography>
-      </AccordionSummary>
-      <AccordionDetails>
-        <Box sx={{ mt: 2 }}>
-          {sectionMeasures.map(measure => (
-            <MeasureDisplay key={measure.id} measure={measure} />
-          ))}
-        </Box>
-      </AccordionDetails>
-    </Accordion>
-  )
-}
+import { SectionDisplay } from '@/components/song/SectionDisplay'
+import { chunk } from '@/utils/util'
+import { MeasureRow } from '@/components/song/MeasureRow'
 
 export default function SongPage({ params }: { params: { id: string } }) {
+  const BASE_SCROLL_AMOUNT = 10 // 基本スクロール量
+  const BASE_SCROLL_INTERVAL = 100 // 基本インターバル時間（0.2秒）
+  const DEFAULT_SCROLL_SPEED = 10
+
   const [song, setSong] = useState<Song | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string>('')
+  const [measuresPerRow, setMeasuresPerRow] = useState<number>(2)
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false)
+  const [scrollSpeed, setScrollSpeed] = useState<number>(DEFAULT_SCROLL_SPEED)
+  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
+
+  // 自動スクロール機能
+  const handleAutoScroll = () => {
+    setIsAutoScrolling(prev => !prev)
+  }
+
+  // スクロール位置をチェックする関数
+  const isScrolledToBottom = () => {
+    const windowHeight = window.innerHeight
+    const documentHeight = document.documentElement.scrollHeight
+    const scrollTop = window.scrollY || document.documentElement.scrollTop
+    return documentHeight - (scrollTop + windowHeight) < BASE_SCROLL_AMOUNT
+  } 
+
+  useEffect(() => {
+    if (isAutoScrolling) {
+      autoScrollIntervalRef.current = setInterval(() => {
+        window.scrollBy({
+          top: BASE_SCROLL_AMOUNT * scrollSpeed / DEFAULT_SCROLL_SPEED,
+          behavior: 'smooth'
+        })
+
+        if (isScrolledToBottom()) {
+          setIsAutoScrolling(false)
+          if (autoScrollIntervalRef.current) {
+            clearInterval(autoScrollIntervalRef.current)
+            autoScrollIntervalRef.current = null
+          }
+        }
+      }, BASE_SCROLL_INTERVAL)
+    } else {
+      if (autoScrollIntervalRef.current) {
+        clearInterval(autoScrollIntervalRef.current)
+        autoScrollIntervalRef.current = null
+      }
+    }
+
+    return () => {
+      if (autoScrollIntervalRef.current) {
+        clearInterval(autoScrollIntervalRef.current)
+      }
+    }
+  }, [isAutoScrolling, scrollSpeed])
+
+  // クリックハンドラー
+  const handleContentClick = (e: React.MouseEvent) => {
+    if (
+      e.target instanceof HTMLButtonElement ||
+      e.target instanceof HTMLSelectElement ||
+      (e.target as HTMLElement).closest('button') ||
+      (e.target as HTMLElement).closest('.MuiSelect-root')
+    ) {
+      return
+    }
+    handleAutoScroll()
+  }
   useEffect(() => {
     const fetchSong = async () => {
       try {
@@ -161,38 +112,24 @@ export default function SongPage({ params }: { params: { id: string } }) {
   }, [params.id])
 
   if (isLoading) {
-    return (
-      <Container maxWidth="md">
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
-      </Container>
-    )
+    return <Container maxWidth="md"><Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box></Container>
   }
 
   if (error) {
-    return (
-      <Container maxWidth="md">
-        <Box sx={{ mt: 4 }}>
-          <Typography color="error">{error}</Typography>
-        </Box>
-      </Container>
-    )
+    return <Container maxWidth="md"><Box sx={{ mt: 4 }}><Typography color="error">{error}</Typography></Box></Container>
   }
 
   if (!song) {
-    return (
-      <Container maxWidth="md">
-        <Box sx={{ mt: 4 }}>
-          <Typography>曲が見つかりませんでした。</Typography>
-        </Box>
-      </Container>
-    )
+    return <Container maxWidth="md"><Box sx={{ mt: 4 }}><Typography>曲が見つかりませんでした。</Typography></Box></Container>
   }
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ py: 4 }}>
+      <Box 
+        sx={{ py: 4 }} 
+        onClick={handleContentClick}
+        ref={containerRef}
+      >
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => router.back()}
@@ -214,6 +151,37 @@ export default function SongPage({ params }: { params: { id: string } }) {
             {song.artist}
           </Typography>
 
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>1行あたりの小節数</InputLabel>
+              <Select
+                value={measuresPerRow}
+                label="1行あたりの小節数"
+                onChange={(e) => setMeasuresPerRow(Number(e.target.value))}
+              >
+                <MenuItem value={1}>1小節</MenuItem>
+                <MenuItem value={2}>2小節</MenuItem>
+                <MenuItem value={4}>4小節</MenuItem>
+                <MenuItem value={8}>8小節</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>スクロール速度</InputLabel>
+              <Select
+                value={scrollSpeed}
+                label="スクロール速度"
+                onChange={(e) => setScrollSpeed(Number(e.target.value))}
+              >
+                {[...Array(21)].map((_, i) => (
+                  <MenuItem key={i} value={i}>
+                    {i === 0 ? '停止' : `${i}`}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
           <Divider sx={{ my: 3 }} />
 
           {song.sections && song.sections.length > 0 ? (
@@ -223,17 +191,16 @@ export default function SongPage({ params }: { params: { id: string } }) {
                   key={section.id} 
                   section={section} 
                   measures={song.measures || []} 
+                  measuresPerRow={measuresPerRow}
                 />
               ))}
             </Box>
           ) : song.measures && song.measures.length > 0 ? (
             <Box sx={{ mt: 4 }}>
-              {song.measures
-                .sort((a, b) => a.measure_number - b.measure_number)
-                .map(measure => (
-                  <MeasureDisplay key={measure.id} measure={measure} />
-                ))
-              }
+              {chunk(song.measures.sort((a, b) => a.measure_number - b.measure_number), measuresPerRow)
+                .map((rowMeasures, index) => (
+                  <MeasureRow key={index} measures={rowMeasures} />
+                ))}
             </Box>
           ) : (
             <Typography sx={{ mt: 4 }} color="text.secondary">
