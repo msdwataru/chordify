@@ -1,0 +1,100 @@
+<svg width="140" height="40" viewBox="0 0 140 40" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- メインのグラデーション - より明るい色調に -->
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2EFD77"/>
+      <stop offset="100%" style="stop-color:#00FF88"/>
+    </linearGradient>
+    
+    <!-- アクセント用グラデーション - より鮮やかに -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00FF88"/>
+      <stop offset="50%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#00FF88"/>
+    </linearGradient>
+    
+    <!-- より強いグロー効果 -->
+    <filter id="strongGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#2EFD77" flood-opacity="0.7"/>
+    </filter>
+
+    <!-- 光沢効果 -->
+    <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0)"/>
+      <stop offset="50%" style="stop-color:rgba(255,255,255,0.8)"/>
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 装飾的な背景光効果 -->
+  <g opacity="0.15">
+    <circle cx="20" cy="20" r="18" fill="url(#logoGradient)">
+      <animate attributeName="opacity" 
+               values="0.15;0.3;0.15" 
+               dur="3s" 
+               repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- メインの音符デザイン -->
+  <g transform="translate(-5, 0)">
+    <!-- 音符の軸 -->
+    <path d="M15 28 C15 18 25 18 25 28" 
+          stroke="url(#logoGradient)" 
+          stroke-width="3" 
+          fill="none" 
+          stroke-linecap="round"
+          filter="url(#strongGlow)"/>
+    
+    <!-- 音符のヘッド -->
+    <circle cx="25" cy="28" r="4.5" 
+            fill="url(#logoGradient)" 
+            filter="url(#strongGlow)"/>
+    
+    <!-- 装飾的な波線 -->
+    <path d="M18 15 Q20 13, 22 15 T26 15" 
+          stroke="#FFFFFF" 
+          stroke-width="1.5" 
+          fill="none" 
+          opacity="0.9"/>
+  </g>
+
+  <!-- 五線譜風の装飾ライン -->
+  <g opacity="0.5">
+    <line x1="8" y1="20" x2="32" y2="20" stroke="#FFFFFF" stroke-width="0.7"/>
+    <line x1="8" y1="24" x2="32" y2="24" stroke="#FFFFFF" stroke-width="0.7"/>
+    <line x1="8" y1="28" x2="32" y2="28" stroke="#FFFFFF" stroke-width="0.7"/>
+    <line x1="8" y1="32" x2="32" y2="32" stroke="#FFFFFF" stroke-width="0.7"/>
+  </g>
+
+  <!-- Chordifyテキスト -->
+  <text x="40" y="28" 
+        font-family="Arial, sans-serif" 
+        font-size="24" 
+        font-weight="bold" 
+        fill="white" 
+        filter="url(#strongGlow)"
+        letter-spacing="1.2">
+    Chordify
+  </text>
+
+  <!-- 動的な光の輪 -->
+  <circle cx="25" cy="28" r="12" fill="url(#logoGradient)" opacity="0.2">
+    <animate attributeName="r" 
+             values="12;15;12" 
+             dur="2s" 
+             repeatCount="indefinite"/>
+    <animate attributeName="opacity" 
+             values="0.2;0.4;0.2" 
+             dur="2s" 
+             repeatCount="indefinite"/>
+  </circle>
+
+  <!-- アクセントライン -->
+  <path d="M35 32 L100 32" 
+        stroke="url(#shineGradient)" 
+        stroke-width="1" 
+        opacity="0.5"/>
+</svg>
