@@ -1,0 +1,48 @@
+# Backend
+backend/tmp
+backend/vendor
+backend/*.exe
+backend/*.exe~
+backend/*.dll
+backend/*.so
+backend/*.dylib
+backend/*.test
+backend/*.out
+backend/go.sum
+
+# Frontend
+frontend/node_modules
+frontend/.next
+frontend/.env
+frontend/.env.local
+frontend/out
+frontend/build
+frontend/.DS_Store
+frontend/*.pem
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.env*.local
+frontend/.vercel
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+.docker/data
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.*
+!.env.example

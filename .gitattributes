@@ -1,0 +1,40 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Go files
+*.go text diff=golang
+
+# TypeScript/JavaScript files
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.json text
+
+# Documentation
+*.md text diff=markdown
+*.txt text
+
+# Docker
+Dockerfile text
+docker-compose.yml text
+*.dockerfile text
+
+# Shell scripts
+*.sh text eol=lf
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.zip binary
+*.tar binary
+*.gz binary

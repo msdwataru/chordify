@@ -1,0 +1,21 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# パッケージインストール時の設定
+ENV NPM_CONFIG_NETWORK_TIMEOUT=100000
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# package.jsonとpackage-lock.jsonをコピー
+COPY package*.json ./
+
+# 依存関係をインストール
+RUN npm install --no-package-lock
+
+# アプリケーションのソースコードをコピー
+COPY . .
+
+# 開発サーバーの起動
+CMD ["npm", "run", "dev"]
+
+EXPOSE 3000
