@@ -19,7 +19,7 @@ func Connect() {
 	}
 
 	// マイグレーション
-	db.AutoMigrate(&models.Song{})
+	db.AutoMigrate(&models.Song{}, &models.Measure{}, &models.Section{})
 
 	DB = db
 	fmt.Println("Database connected successfully")

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	"gorm.io/gorm"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,12 +18,8 @@ func SearchSongs(c *gin.Context) {
 	var songs []models.Song
 
 	if query != "" {
-		// 検索パターンを作成
 		searchPattern := "%" + query + "%"
-
-		// クエリの実行とエラーハンドリング
 		result := database.DB.Where("title ILIKE ? OR artist ILIKE ?", searchPattern, searchPattern).Find(&songs)
-		//result := database.DB.Where("title ILIKE '%X%' OR artist ILIKE '%X%'").Find(&songs)
 		if result.Error != nil {
 			log.Printf("Error executing search query: %v", result.Error)
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -33,7 +31,6 @@ func SearchSongs(c *gin.Context) {
 
 		log.Printf("Found %d songs matching query %q", len(songs), query)
 
-		// 検索結果が0件の場合
 		if len(songs) == 0 {
 			c.JSON(http.StatusOK, gin.H{
 				"message": "No songs found matching the search criteria",
@@ -42,7 +39,6 @@ func SearchSongs(c *gin.Context) {
 			return
 		}
 	} else {
-		// クエリパラメータがない場合は全件取得
 		result := database.DB.Find(&songs)
 		if result.Error != nil {
 			log.Printf("Error fetching all songs: %v", result.Error)
@@ -53,11 +49,6 @@ func SearchSongs(c *gin.Context) {
 			return
 		}
 		log.Printf("Retrieved all songs, count: %d", len(songs))
-	}
-
-	// 結果の詳細をログに出力（デバッグ用）
-	for i, song := range songs {
-		log.Printf("Result %d: ID=%d, Title=%q, Artist=%q", i+1, song.ID, song.Title, song.Artist)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -71,7 +62,15 @@ func GetSongByID(c *gin.Context) {
 	log.Printf("Fetching song with ID: %s", id)
 
 	var song models.Song
-	result := database.DB.First(&song, id)
+	// Measuresの順序を指定して取得
+	result := database.DB.
+		Preload("Measures", func(db *gorm.DB) *gorm.DB {
+			return db.Order("measure_number ASC")
+		}).
+		Preload("Sections", func(db *gorm.DB) *gorm.DB {
+			return db.Order("start_measure ASC")
+		}).
+		First(&song, id)
 
 	if result.Error != nil {
 		log.Printf("Error fetching song with ID %s: %v", id, result.Error)
@@ -82,6 +81,8 @@ func GetSongByID(c *gin.Context) {
 		return
 	}
 
-	log.Printf("Found song: ID=%d, Title=%q, Artist=%q", song.ID, song.Title, song.Artist)
+	log.Printf("Found song: ID=%d, Title=%q, Artist=%q, Measures count: %d, Sections count: %d",
+		song.ID, song.Title, song.Artist, len(song.Measures), len(song.Sections))
+
 	c.JSON(http.StatusOK, song)
 }
